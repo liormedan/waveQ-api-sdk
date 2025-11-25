@@ -192,6 +192,20 @@ async def trim_audio(
     
     tasks_db[task_id] = task
     
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_path = settings.OUTPUT_DIR / f"{task_id}_trimmed.wav"
+        process_trim.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            output_path=str(output_path),
+            silence_threshold_db=silence_threshold_db,
+            min_silence_duration=min_silence_duration,
+            remove_silence=remove_silence,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+    
     return task
 
 
@@ -230,6 +244,19 @@ async def separate_audio(
     )
     
     tasks_db[task_id] = task
+    
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_dir = settings.OUTPUT_DIR / task_id
+        process_separate.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            output_dir=str(output_dir),
+            separation_type=separation_type,
+            save_all_stems=False,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
     
     return task
 
@@ -270,6 +297,17 @@ async def analyze_sentiment(
     
     tasks_db[task_id] = task
     
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        process_sentiment.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            include_emotions=include_emotions,
+            confidence_threshold=confidence_threshold,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+    
     return task
 
 
@@ -303,6 +341,21 @@ async def text_to_speech(
     )
     
     tasks_db[task_id] = task
+    
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_path = settings.OUTPUT_DIR / f"{task_id}_speech.mp3"
+        process_tts.delay(
+            task_id=task_id,
+            text=text,
+            output_path=str(output_path),
+            voice_id=voice_id,
+            language=language,
+            speed=speed,
+            backend="bark",
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
     
     return task
 

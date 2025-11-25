@@ -1,0 +1,71 @@
+# Instructions for completing Celery integration in api/routes.py
+
+# Add the following code blocks to complete the implementation:
+
+## 1. For trim_audio endpoint (after line 193):
+"""
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_path = settings.OUTPUT_DIR / f"{task_id}_trimmed.wav"
+        process_trim.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            output_path=str(output_path),
+            silence_threshold_db=silence_threshold_db,
+            min_silence_duration=min_silence_duration,
+            remove_silence=remove_silence,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+"""
+
+## 2. For separate_audio endpoint (after line 232):
+"""
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_dir = settings.OUTPUT_DIR / task_id
+        process_separate.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            output_dir=str(output_dir),
+            separation_type=separation_type,
+            save_all_stems=False,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+"""
+
+## 3. For analyze_sentiment endpoint (after line 271):
+"""
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        process_sentiment.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            include_emotions=include_emotions,
+            confidence_threshold=confidence_threshold,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+"""
+
+## 4. For text_to_speech endpoint (after line 305):
+"""
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_path = settings.OUTPUT_DIR / f"{task_id}_speech.mp3"
+        process_tts.delay(
+            task_id=task_id,
+            text=text,
+            output_path=str(output_path),
+            voice_id=voice_id,
+            language=language,
+            speed=speed,
+            backend="bark",
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+"""
+
+# NOTE: The code above should be inserted BEFORE the "return task" line
+# in each respective endpoint.
