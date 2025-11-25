@@ -16,6 +16,14 @@ from waveq.models import (
 from config import settings
 from utils import generate_task_id, async_save_upload_file
 from api.auth import verify_api_key
+from tasks import (
+    process_denoise,
+    process_transcribe,
+    process_trim,
+    process_separate,
+    process_sentiment,
+    process_tts,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +32,15 @@ router = APIRouter()
 
 # In-memory task storage (replace with database in production)
 tasks_db = {}
+
+# Check if Celery is available
+try:
+    from celery_app import celery_app
+    CELERY_ENABLED = True
+    logger.info("Celery enabled for async processing")
+except ImportError:
+    CELERY_ENABLED = False
+    logger.warning("Celery not available, using synchronous processing")
 
 
 @router.post("/denoise", response_model=AudioProcessingResponse)
@@ -64,8 +81,21 @@ async def denoise_audio(
     
     tasks_db[task_id] = task
     
-    # In production: queue background task for actual processing
-    # background_tasks.add_task(process_denoise, task_id, file_path, noise_reduction_level, enhance_speech)
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        output_path = settings.OUTPUT_DIR / f"{task_id}_denoised.wav"
+        process_denoise.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            output_path=str(output_path),
+            noise_reduction_level=noise_reduction_level,
+            enhance_speech=enhance_speech,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
+        logger.info(f"Task {task_id} queued for async processing")
+    else:
+        logger.warning(f"Task {task_id} created but not processed (Celery disabled)")
     
     return task
 
@@ -109,8 +139,18 @@ async def transcribe_audio(
     
     tasks_db[task_id] = task
     
-    # In production: queue background task
-    # background_tasks.add_task(process_transcribe, task_id, file_path, language, enable_diarization, model)
+    # Queue async task if Celery is available
+    if CELERY_ENABLED:
+        process_transcribe.delay(
+            task_id=task_id,
+            input_path=str(file_path),
+            language=language,
+            enable_diarization=enable_diarization,
+            timestamps=timestamps,
+            model=model,
+            callback_url=callback_url,
+        )
+        task.status = ProcessingStatus.PROCESSING
     
     return task
 
