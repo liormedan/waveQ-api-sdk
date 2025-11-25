@@ -1,0 +1,37 @@
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-multipart>=0.0.6
+httpx>=0.25.0
+aiofiles>=23.2.1
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
+
+# Audio Processing
+librosa>=0.10.0
+soundfile>=0.12.0
+pydub>=0.25.1
+noisereduce>=3.0.0
+scipy>=1.11.0
+
+# AI/ML Models
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.30.0
+
+# Source Separation
+demucs>=4.0.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Task Queue
+celery>=5.3.0
+redis>=5.0.0
+
+# Optional: Third-party APIs
+# elevenlabs>=0.2.0
+# openai>=1.0.0

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  waveq-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=your-secret-key
+      - DEBUG=True
+      - DATABASE_URL=sqlite:///./waveq.db
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Optional: Add Celery worker for async processing
+  # celery-worker:
+  #   build: .
+  #   command: celery -A tasks worker --loglevel=info
+  #   environment:
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   depends_on:
+  #     - redis
+  #     - waveq-api
+  #   restart: unless-stopped
+
+volumes:
+  uploads:
+  outputs:
